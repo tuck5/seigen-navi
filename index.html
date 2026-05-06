@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今日だけ制限ナビ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --card: #13131a;
+    --border: #2a2a3a;
+    --accent: #ff6b35;
+    --accent2: #ffaa00;
+    --green: #00e5a0;
+    --text: #f0f0f5;
+    --muted: #888899;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px 16px 40px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+    padding-top: 10px;
+  }
+
+  .header .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+
+  .header h1 {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.3;
+  }
+
+  .header h1 span {
+    color: var(--accent);
+  }
+
+  .header p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+
+  /* モード切り替え */
+  .mode-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 12px 8px;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(255,107,53,0.1);
+  }
+
+  /* ステップカード */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .steps-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .step-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .step-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .step-card.done {
+    border-color: var(--green);
+    opacity: 0.7;
+  }
+
+  .step-card.done::after {
+    content: '✓';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--green);
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  .step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,107,53,0.15);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step-card.done .step-num {
+    background: rgba(0,229,160,0.15);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .step-content h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+
+  .step-content p {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .step-content .path {
+    font-size: 11px;
+    color: var(--accent2);
+    margin-top: 4px;
+    background: rgba(255,170,0,0.1);
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  /* リセットボタン */
+  .reset-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+  }
+
+  .reset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255,107,53,0.4);
+  }
+
+  .reset-btn:active {
+    transform: translateY(0);
+  }
+
+  /* 進捗バー */
+  .progress-wrap {
+    margin-bottom: 20px;
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    transition: width 0.4s ease;
+  }
+
+  /* 時計 */
+  .clock-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .clock-card .time {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--accent2);
+    letter-spacing: 3px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .clock-card .time-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .clock-card .reset-time {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--green);
+  }
+
+  /* 完了画面 */
+  .complete-card {
+    display: none;
+    background: linear-gradient(135deg, rgba(0,229,160,0.1), rgba(0,229,160,0.05));
+    border: 2px solid var(--green);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .complete-card.show { display: block; }
+
+  .complete-card .icon { font-size: 40px; margin-bottom: 10px; }
+  .complete-card h2 { font-size: 18px; font-weight: 900; color: var(--green); margin-bottom: 6px; }
+  .complete-card p { font-size: 13px; color: var(--muted); }
+
+  /* パネル切り替え */
+  .panel { display: none; }
+  .panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="badge">👨‍👧 ファミリー共有</div>
+  <h1>今日だけ<span>全アプリ制限</span><br>かんたんナビ</h1>
+  <p>ステップをタップしながら進めましょう</p>
+</div>
+
+<div class="clock-card">
+  <div class="time" id="clock">--:--:--</div>
+  <div class="time-label">現在時刻</div>
+  <div class="reset-time">🔄 深夜 0:00 に自動リセット提示</div>
+</div>
+
+<div class="mode-tabs">
+  <button class="tab-btn active" onclick="switchTab('restrict')">🔒 制限する</button>
+  <button class="tab-btn" onclick="switchTab('release')">🔓 元に戻す</button>
+</div>
+
+<!-- 制限パネル -->
+<div class="panel active" id="panel-restrict">
+  <div class="section-label">STEP BY STEP</div>
+
+  <div class="progress-wrap">
+    <div class="progress-info">
+      <span>進捗</span>
+      <span id="progress-text-r">0 / 5</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill-r" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="complete-card" id="complete-r">
+    <div class="icon">🎉</div>
+    <h2>制限完了！</h2>
+    <p>今日は深夜0:00まで全アプリが制限されます。<br>0:00を過ぎたら「元に戻す」タブで解除してください。</p>
+  </div>
+
+  <div class="steps-container" id="steps-r">
+    <div class="step-card" onclick="toggleStep(this, 'r')">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>親のiPhoneで「設定」を開く</h3>
+        <p>ホーム画面の歯車アイコン</p>
+        <div class="path">設定アプリ</div>
+      </div>
+    </div>
+    <div class="step-card" onclick="toggleStep(this, 'r')">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>「スクリーンタイム」をタップ</h3>
+        <p>設定画面をスクロールして探す</p>
+        <div class="path">設定 → スクリーンタイム</div>
+      </div>
+    </div>
+    <div class="step-card" onclick="toggleStep(this, 'r')">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>子供の名前をタップ</h3>
+        <p>ファミリー共有のメンバー一覧から選ぶ</p>
+        <div class="path">→ 子供のアカウント名</div>
+      </div>
+    </div>
+    <div class="step-card" onclick="toggleStep(this, 'r')">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h3>「休止時間」をタップ</h3>
+        <p>この機能で全アプリを使えなくできる</p>
+        <div class="path">→ 休止時間</div>
+      </div>
+    </div>
+    <div class="step-card" onclick="toggleStep(this, 'r')">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <h3>「今日だけ」をオンにして時間を設定</h3>
+        <p>「今日だけ」を選択 → 今すぐ〜23:59 に設定してオン</p>
+        <div class="path">→ 今日だけ → 開始〜終了時刻を設定</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetSteps('r')">🔄 最初からやり直す</button>
+</div>
+
+<!-- 解除パネル -->
+<div class="panel" id="panel-release">
+  <div class="section-label">STEP BY STEP</div>
+
+  <div class="progress-wrap">
+    <div class="progress-info">
+      <span>進捗</span>
+      <span id="progress-text-l">0 / 4</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill-l" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="complete-card" id="complete-l">
+    <div class="icon">✅</div>
+    <h2>解除完了！</h2>
+    <p>通常通りアプリが使えるようになりました。</p>
+  </div>
+
+  <div class="steps-container" id="steps-l">
+    <div class="step-card" onclick="toggleStep(this, 'l')">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>親のiPhoneで「設定」を開く</h3>
+        <p>ホーム画面の歯車アイコン</p>
+        <div class="path">設定アプリ</div>
+      </div>
+    </div>
+    <div class="step-card" onclick="toggleStep(this, 'l')">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>「スクリーンタイム」→ 子供の名前</h3>
+        <p>ファミリー共有のメンバーを選ぶ</p>
+        <div class="path">設定 → スクリーンタイム → 子供名</div>
+      </div>
+    </div>
+    <div class="step-card" onclick="toggleStep(this, 'l')">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>「休止時間」をタップ</h3>
+        <p>制限設定の画面を開く</p>
+        <div class="path">→ 休止時間</div>
+      </div>
+    </div>
+    <div class="step-card" onclick="toggleStep(this, 'l')">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h3>「今日だけ」をオフにする</h3>
+        <p>トグルをオフにすれば元通り</p>
+        <div class="path">→ 今日だけ → オフ</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetSteps('l')">🔄 最初からやり直す</button>
+</div>
+
+<script>
+  // 時計
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // タブ切り替え
+  function switchTab(mode) {
+    document.querySelectorAll('.tab-btn').forEach((b,i) => {
+      b.classList.toggle('active', (i===0 && mode==='restrict') || (i===1 && mode==='release'));
+    });
+    document.getElementById('panel-restrict').classList.toggle('active', mode==='restrict');
+    document.getElementById('panel-release').classList.toggle('active', mode==='release');
+  }
+
+  // ステップトグル
+  function toggleStep(card, group) {
+    card.classList.toggle('done');
+    updateProgress(group);
+  }
+
+  function updateProgress(group) {
+    const panelId = group === 'r' ? 'steps-r' : 'steps-l';
+    const cards = document.querySelectorAll(`#${panelId} .step-card`);
+    const done = document.querySelectorAll(`#${panelId} .step-card.done`).length;
+    const total = cards.length;
+    const pct = Math.round(done / total * 100);
+
+    document.getElementById(`progress-fill-${group}`).style.width = pct + '%';
+    document.getElementById(`progress-text-${group}`).textContent = `${done} / ${total}`;
+
+    const completeId = group === 'r' ? 'complete-r' : 'complete-l';
+    document.getElementById(completeId).classList.toggle('show', done === total);
+  }
+
+  function resetSteps(group) {
+    const panelId = group === 'r' ? 'steps-r' : 'steps-l';
+    document.querySelectorAll(`#${panelId} .step-card`).forEach(c => c.classList.remove('done'));
+    updateProgress(group);
+  }
+</script>
+</body>
+</html>
